@@ -3,5 +3,5 @@ Tictactoe game with minimax algorithm (C++), where you can choose the size of pl
 
 There is three versions of tictactoe game:
 1. Simple PvP tictactoe
-2. Tictactoe PvE (player vs AI)
-3. Tictactoe PvE with alpha-beta pruning
+2. Tictactoe PvAI
+3. Tictactoe PvAI with alpha-beta pruning
