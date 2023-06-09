@@ -27,6 +27,7 @@ int min(int a, int b)
 	}
 }
 
+
 class TicTacToe
 {
 public:
@@ -188,6 +189,24 @@ public:
 		return 1;
 	}
 
+	bool has_neighbours(int row, int col)
+	{
+		for (int i = row-1; i <= row+1; i++)
+		{
+			for (int j = col-1; j <= col+1; j++)
+			{
+				if (i >= 0 && j >= 0 && i < field_size && j < field_size)
+				{
+					if (field[i][j] == -turn ||  field[i][j] == -!turn)
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
 	void AI_make_turn()
 	{
 		int best_val = INT_MIN;
@@ -207,7 +226,7 @@ public:
 
 		for (int i = 0; i < field_size * field_size; i++)
 		{
-			if (field[i / field_size][i % field_size] == i + 1)
+			if ((field[i / field_size][i % field_size] == i + 1) && has_neighbours(i/field_size, i % field_size))
 			{
 				field[i / field_size][i % field_size] = -turn;
 				turn = !turn;
@@ -251,7 +270,7 @@ public:
 
 		if (round_counter == max_rounds || score != 1 || depth == 0)
 		{
-			return win_points(score);
+			return win_points(score, depth);
 		}
 		else if (is_maximizing)
 		{
@@ -260,7 +279,7 @@ public:
 			for (int i = 0; i < field_size * field_size; i++)
 			{
 				//is cell empty
-				if (field[i / field_size][i % field_size] == i + 1)
+				if (field[i / field_size][i % field_size] == i + 1 && has_neighbours(i / field_size, i % field_size))
 				{
 					field[i / field_size][i % field_size] = -turn;
 					turn = !turn;
@@ -321,85 +340,81 @@ public:
 		}
 	}
 
-	int win_points(int gamestate)
+	int win_points(int gamestate, int depth)
 	{
 		int result = 0;
 
+		// depth heuristics 
 		if (gamestate == -1)
 		{
-			result = -10;
+			return -100 + depth;
 		}
 		else if (gamestate == 0)
 		{
-			result = 10;
+			return 105 - depth;
 		}
 		else
 		{
-			
-			/*if ([&]() -> bool
-				{
-					for (int i = 0; i < 2; i++)
-					{
-						for (int j = 0; j < 2; j++)
-						{
-							if (field[i * (field_size - 1)][j * (field_size - 1)] == 0)
-							{
-								return true;
-							}
-						}
-					}
-					return false;
-				}())
-			{
-				result++;
-			}*/
-
 			//check if center is empty (only for odd field size)
 			if (field[field_size / 2][field_size / 2] == 0 && field_size % 2 == 1)
 			{
-				result++;
+				result += 2;
 			}
 
 			//count x's and 0's in cols and rows to return points
-			int counterH = 0;
-			int counterV = 0;
+			int counterH0 = 0;
+			int counterHX = 0;
+			int counterV0 = 0;
+			int counterVX = 0;
 
 			for (int i = 0; i < field_size; i++)
 			{
-				for (int j = 0; j < field_size - 1; j++)
+				for (int j = 0; j < field_size ; j++)
 				{
-					//horizontal count
-					if (field[i][j] == field[i][j + 1])
+					if (field[i][j] == 0)
 					{
-						counterH++;
+						counterH0++;
 					}
-					else
+					else if (field[i][j] == -1)
 					{
-						counterH = 0;
+						counterHX++;
 					}
-
-					//vertical count
-					if (field[j][i] == field[j + 1][i])
+					
+					if (field[j][i] == 0)
 					{
-						counterV++;
+						counterV0++;
 					}
-					else
+					else if (field[j][i] == -1)
 					{
-						counterV = 0;
+						counterVX++;
 					}
 
-					//check win condition
-					if (counterH == win_condition - 1)
-					{
-						return field[i][j];
-					}
-					else if (counterV == win_condition - 1)
-					{
-						return field[j][i];
-					}
 				}
-				counterV = 0;
-				counterH = 0;
+
+				// checks how many Xs and 0s is on a line
+				if (counterV0 == 0)
+				{
+					result -= counterVX * 2;
+				}
+				else
+				{
+					result += counterV0 - counterVX;
+				}
+				if (counterH0 == 0)
+				{
+					result -= counterHX * 2;
+				}
+				else
+				{
+					result += counterH0 - counterHX;
+				}
+				
+				
+
+				counterV0 = 0;
+				counterVX = 0;
+				counterH0 = 0;
+				counterHX = 0;
 			}
 			
 		}
@@ -454,7 +469,7 @@ public:
 				{
 					std::cout << field[i][j];
 				}
-
+				
 				if (field[i][j] < 10 && field[i][j] > -2)
 				{
 					std::cout << ' ';
